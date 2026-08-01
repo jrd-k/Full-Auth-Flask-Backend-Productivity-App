@@ -12,26 +12,32 @@ pipenv shell
 ## Database setup
 
 ```bash
-flask db init
-flask db migrate -m "initial migration"
-flask db upgrade
-python seed.py
+pipenv run flask --app app db init
+pipenv run flask --app app db migrate -m "Initial migration"
+pipenv run flask --app app db upgrade
+pipenv run python seed.py
 ```
 
 ## Run the app
 
 ```bash
-python app.py
+pipenv run python app.py
 ```
 
-## Endpoints
+## API endpoints
 
-- POST /signup: create a new user account
-- POST /login: authenticate a user and start a session
+- POST /signup: create a new account and start a session
+- POST /login: authenticate an existing user
 - POST /logout: clear the current session
-- GET /me: return the authenticated user
+- GET /me: return the authenticated user profile
 - GET /notes: list the current user's notes with pagination
 - POST /notes: create a new note for the current user
 - GET /notes/<id>: fetch one note for the current user
 - PATCH /notes/<id>: update one note for the current user
 - DELETE /notes/<id>: delete one note for the current user
+
+## Testing
+
+```bash
+pipenv run pytest -q
+```
