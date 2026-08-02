@@ -22,8 +22,26 @@ def create_app(test_config=None):
     db.init_app(app)
     migrate.init_app(app, db)
 
+    @app.errorhandler(404)
+    def not_found(e):
+        return jsonify({"error": "not found"}), 404
+
+    @app.errorhandler(405)
+    def method_not_allowed(e):
+        return jsonify({"error": "method not allowed"}), 405
+
+    @app.errorhandler(415)
+    def unsupported_media_type(e):
+        return jsonify({"error": "request must be JSON"}), 415
+
+    @app.errorhandler(500)
+    def server_error(e):
+        return jsonify({"error": "internal server error"}), 500
+
     @app.route("/signup", methods=["POST"])
     def signup():
+        if request.content_length and request.content_type and "json" not in request.content_type:
+            return jsonify({"error": "request must be JSON"}), 415
         data = request.get_json()
         if not data or not data.get("username") or not data.get("password"):
             return jsonify({"error": "username and password are required"}), 400
@@ -43,6 +61,8 @@ def create_app(test_config=None):
 
     @app.route("/login", methods=["POST"])
     def login():
+        if request.content_length and request.content_type and "json" not in request.content_type:
+            return jsonify({"error": "request must be JSON"}), 415
         data = request.get_json()
         if not data or not data.get("username") or not data.get("password"):
             return jsonify({"error": "username and password are required"}), 400
@@ -81,6 +101,11 @@ def create_app(test_config=None):
         if request.path.startswith("/static"):
             return None
 
+        if request.url_rule is None:
+            # No matching route for this URL — let Flask's normal 404/405
+            # handling run instead of reporting a false auth failure.
+            return None
+
         user_id = session.get("user_id")
         if not user_id:
             return jsonify({"error": "not authenticated"}), 401
@@ -100,6 +125,8 @@ def create_app(test_config=None):
 
     @app.route("/notes", methods=["POST"])
     def create_note():
+        if request.content_length and request.content_type and "json" not in request.content_type:
+            return jsonify({"error": "request must be JSON"}), 415
         data = request.get_json()
         if not data or not data.get("title") or not data.get("content") or not data.get("category"):
             return jsonify({"error": "title, content, and category are required"}), 400
@@ -122,6 +149,8 @@ def create_app(test_config=None):
         if not note or note.user_id != session["user_id"]:
             return jsonify({"error": "note not found"}), 404
 
+        if request.content_length and request.content_type and "json" not in request.content_type:
+            return jsonify({"error": "request must be JSON"}), 415
         data = request.get_json()
         if not data:
             return jsonify({"error": "request body is required"}), 400

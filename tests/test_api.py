@@ -111,3 +111,26 @@ def test_unauthenticated_requests_are_rejected(client):
         json={"title": "No access", "content": "blocked", "category": "work"},
     )
     assert response.status_code == 401
+
+
+def test_unknown_route_returns_404_not_401(client):
+    response = client.get("/nonexistent")
+    assert response.status_code == 404
+    assert response.get_json() == {"error": "not found"}
+
+    client.post("/signup", json={"username": "alice", "password": "secret123"})
+
+    response = client.get("/nonexistent")
+    assert response.status_code == 404
+    assert response.get_json() == {"error": "not found"}
+
+
+def test_missing_json_content_type_returns_json_error(client):
+    response = client.post(
+        "/signup",
+        data="not json",
+        content_type="text/plain",
+    )
+    assert response.status_code == 415
+    assert response.content_type == "application/json"
+    assert response.get_json() == {"error": "request must be JSON"}
